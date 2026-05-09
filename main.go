@@ -23,6 +23,7 @@ func main() {
 
 	routes.AuthRoutes(router)
 	routes.TaskRoutes(router)
+	routes.AdminRoutes(router)
 
 	router.Run(":" + os.Getenv("PORT"))
 }
