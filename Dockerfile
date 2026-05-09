@@ -1,4 +1,4 @@
-FROM golang:1.23
+FROM golang:1.26.1
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o main ./cmd
+RUN go build -o main .
 
 EXPOSE 8080
 

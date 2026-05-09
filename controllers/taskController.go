@@ -62,27 +62,24 @@ func CreateTask(c *gin.Context) {
 		"message": "Task Created Successfully",
 	})
 }
-
 func GetTasks(c *gin.Context) {
-
-	userID := c.GetString("user_id")
-
-	objID, _ := primitive.ObjectIDFromHex(userID)
 
 	collection := config.DB.Collection("tasks")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
 
 	defer cancel()
 
-	cursor, err := collection.Find(ctx, bson.M{
-		"user_id": objID,
-	})
+	// Fetch all tasks
+	cursor, err := collection.Find(ctx, bson.M{})
 
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to Fetch Tasks",
+			"message": "Failed to fetch tasks",
 		})
 
 		return
@@ -90,11 +87,20 @@ func GetTasks(c *gin.Context) {
 
 	var tasks []models.Task
 
-	cursor.All(ctx, &tasks)
+	if err = cursor.All(ctx, &tasks); err != nil {
 
-	c.JSON(http.StatusOK, tasks)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error decoding tasks",
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    tasks,
+	})
 }
-
 func UpdateTask(c *gin.Context) {
 
 	id := c.Param("id")
