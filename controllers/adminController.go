@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"backend/config"
 	"context"
 	"net/http"
+	"task-management-system-backend/config"
 	"time"
 
 	"github.com/gin-gonic/gin"

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"backend/config"
-	"backend/routes"
 	"log"
 	"os"
+	"task-management-system-backend/config"
+	"task-management-system-backend/routes"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"

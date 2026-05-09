@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"backend/config"
-	"backend/models"
-	"backend/utils"
-	"backend/validators"
 	"context"
 	"net/http"
+	"task-management-system-backend/config"
+	"task-management-system-backend/models"
+	"task-management-system-backend/utils"
+	"task-management-system-backend/validators"
 	"time"
 
 	"github.com/gin-gonic/gin"

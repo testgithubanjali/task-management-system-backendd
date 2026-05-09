@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"backend/controllers"
-	"backend/middleware"
+	"task-management-system-backend/controllers"
+	"task-management-system-backend/middleware"
 
 	"github.com/gin-gonic/gin"
 )
