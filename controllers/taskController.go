@@ -3,6 +3,7 @@ package controllers
 import (
 	"backend/config"
 	"backend/models"
+	"backend/validators"
 	"context"
 	"net/http"
 	"time"
@@ -14,15 +15,31 @@ import (
 
 func CreateTask(c *gin.Context) {
 
-	var task models.Task
+	var input validators.TaskInput
 
-	c.BindJSON(&task)
+	if err := c.BindJSON(&input); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Input",
+		})
+
+		return
+	}
+
+	if !validators.ValidateStruct(c, input) {
+		return
+	}
 
 	userID := c.GetString("user_id")
 
 	objID, _ := primitive.ObjectIDFromHex(userID)
 
-	task.UserID = objID
+	task := models.Task{
+		Title:       input.Title,
+		Description: input.Description,
+		Status:      input.Status,
+		UserID:      objID,
+	}
 
 	collection := config.DB.Collection("tasks")
 
@@ -35,14 +52,14 @@ func CreateTask(c *gin.Context) {
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Task creation failed",
+			"message": "Task Creation Failed",
 		})
 
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Task Created",
+		"message": "Task Created Successfully",
 	})
 }
 
@@ -65,7 +82,7 @@ func GetTasks(c *gin.Context) {
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error fetching tasks",
+			"message": "Failed to Fetch Tasks",
 		})
 
 		return
@@ -82,11 +99,31 @@ func UpdateTask(c *gin.Context) {
 
 	id := c.Param("id")
 
-	objID, _ := primitive.ObjectIDFromHex(id)
+	objID, err := primitive.ObjectIDFromHex(id)
 
-	var task models.Task
+	if err != nil {
 
-	c.BindJSON(&task)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Task ID",
+		})
+
+		return
+	}
+
+	var input validators.TaskInput
+
+	if err := c.BindJSON(&input); err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Input",
+		})
+
+		return
+	}
+
+	if !validators.ValidateStruct(c, input) {
+		return
+	}
 
 	collection := config.DB.Collection("tasks")
 
@@ -94,13 +131,14 @@ func UpdateTask(c *gin.Context) {
 
 	defer cancel()
 
-	_, err := collection.UpdateOne(ctx,
+	_, err = collection.UpdateOne(
+		ctx,
 		bson.M{"_id": objID},
 		bson.M{
 			"$set": bson.M{
-				"title":       task.Title,
-				"description": task.Description,
-				"status":      task.Status,
+				"title":       input.Title,
+				"description": input.Description,
+				"status":      input.Status,
 			},
 		},
 	)
@@ -108,14 +146,14 @@ func UpdateTask(c *gin.Context) {
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Update failed",
+			"message": "Task Update Failed",
 		})
 
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Task Updated",
+		"message": "Task Updated Successfully",
 	})
 }
 
@@ -123,7 +161,16 @@ func DeleteTask(c *gin.Context) {
 
 	id := c.Param("id")
 
-	objID, _ := primitive.ObjectIDFromHex(id)
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Task ID",
+		})
+
+		return
+	}
 
 	collection := config.DB.Collection("tasks")
 
@@ -131,20 +178,20 @@ func DeleteTask(c *gin.Context) {
 
 	defer cancel()
 
-	_, err := collection.DeleteOne(ctx, bson.M{
+	_, err = collection.DeleteOne(ctx, bson.M{
 		"_id": objID,
 	})
 
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Delete failed",
+			"message": "Task Delete Failed",
 		})
 
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Task Deleted",
+		"message": "Task Deleted Successfully",
 	})
 }

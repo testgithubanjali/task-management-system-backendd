@@ -4,6 +4,7 @@ import (
 	"backend/config"
 	"backend/models"
 	"backend/utils"
+	"backend/validators"
 	"context"
 	"net/http"
 	"time"
@@ -14,14 +15,18 @@ import (
 
 func Register(c *gin.Context) {
 
-	var user models.User
+	var input validators.RegisterInput
 
-	if err := c.BindJSON(&user); err != nil {
+	if err := c.BindJSON(&input); err != nil {
 
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid Data",
+			"message": "Invalid Input",
 		})
 
+		return
+	}
+
+	if !validators.ValidateStruct(c, input) {
 		return
 	}
 
@@ -34,7 +39,7 @@ func Register(c *gin.Context) {
 	var existingUser models.User
 
 	err := collection.FindOne(ctx, bson.M{
-		"email": user.Email,
+		"email": input.Email,
 	}).Decode(&existingUser)
 
 	if err == nil {
@@ -46,9 +51,14 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, _ := utils.HashPassword(user.Password)
+	hashedPassword, _ := utils.HashPassword(input.Password)
 
-	user.Password = hashedPassword
+	user := models.User{
+		Name:     input.Name,
+		Email:    input.Email,
+		Password: hashedPassword,
+		Role:     input.Role,
+	}
 
 	if user.Role == "" {
 		user.Role = "user"
@@ -59,26 +69,36 @@ func Register(c *gin.Context) {
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Registration failed",
+			"message": "Registration Failed",
 		})
 
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "User Registered",
+		"message": "User Registered Successfully",
 	})
 }
 
 func Login(c *gin.Context) {
 
-	var data map[string]string
+	var input validators.LoginInput
 
-	c.BindJSON(&data)
+	if err := c.BindJSON(&input); err != nil {
 
-	email := data["email"]
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid Input",
+		})
 
-	password := data["password"]
+		return
+	}
+
+	if !validators.ValidateStruct(c, input) {
+		return
+	}
+
+	email := input.Email
+	password := input.Password
 
 	collection := config.DB.Collection("users")
 
@@ -115,7 +135,13 @@ func Login(c *gin.Context) {
 	token, _ := utils.GenerateToken(user.ID.Hex(), user.Role)
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  user,
+		"message": "Login Successful",
+		"token":   token,
+		"user": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
 	})
 }
