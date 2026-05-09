@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build: .
+    container_name: golang_backend
+
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - .env
+
+    depends_on:
+      - mongodb
+
+    restart: always
+
+  mongodb:
+    image: mongo:latest
+
+    container_name: mongodb
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - mongo_data:/data/db
+
+    restart: always
+
+volumes:
+  mongo_data:
